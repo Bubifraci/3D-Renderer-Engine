@@ -9,52 +9,49 @@ from gameObj import GameObject
 def renderObjects(objects, cam, width, height, screen):
     mvp = cam.getMVP()
     for gObject in objects:
-        transformed_coordinates = []
         vertices = gObject.getGlobalVertices()
 
-        for vertex in vertices:
-            homVertex = np.array([vertex[0], vertex[1], vertex[2], 1.0])
-            newVertex = mvp @ homVertex
+        vertexMatrix = np.array(vertices)
 
-            w = newVertex[3]
-            if w > 0:
-                normalizedVertex = np.array(
-                    [newVertex[0] / w, newVertex[1] / w, newVertex[2] / w]
-                )
-                x_pix = width * (normalizedVertex[0] + 1) / 2.0
-                y_pix = height * (1 - normalizedVertex[1]) / 2.0
-                transformed_coordinates.append(np.array([x_pix, y_pix, w]))
-            else:
-                transformed_coordinates.append(np.array([0, 0, w]))
+        ones = np.ones(len(vertexMatrix))
 
-        faces_to_render = []
+        vertexMatrix = np.column_stack((vertexMatrix, ones)).T
 
-        for face in gObject.faces:
-            if(len(face) == 3):
-                w = 0
-                vertices = [transformed_coordinates[face[0]], transformed_coordinates[face[1]], transformed_coordinates[face[2]]]
-                newVertices = []
+        transformedMatrix = mvp @ vertexMatrix
 
-                isValid = True
+        w_vals = transformedMatrix[3]
 
-                for vertex in vertices:
-                    w += vertex[2]
-                    if vertex[2] <= 0:
-                        isValid = False
-                        break
-                    else:
-                        newVertices.append(np.array([vertex[0], vertex[1]]))
+        transformedMatrix /= w_vals
 
-                w /= 3
+        x_vals = width * (transformedMatrix[0] + 1) / 2.0
+        y_vals = height * (1 - transformedMatrix[1]) / 2.0
 
-                if(isValid):
-                    faces_to_render.append((w, newVertices))
+        renderCoordinates = np.array([x_vals, y_vals, w_vals]).T
 
-        faces_to_render.sort(key=lambda x: x[0], reverse=True)
+        # Faces
+        faces = np.array(gObject.faces)
 
-        for w, draw_vertices in faces_to_render:
+        polygons = renderCoordinates[faces]
+
+        w_polygons = polygons[:, :, 2]
+
+        valid_mask = (w_polygons > 0).all(axis=1)
+
+        w_polyongs = polygons[valid_mask]
+
+        mean_w = w_polyongs[:, :, 2].mean(axis=1)
+
+        sort_indices = np.argsort(mean_w)[::-1]
+
+        sorted_triangles = w_polyongs[sort_indices]
+
+        for pol in sorted_triangles:
+            pts = pol[:, :2]
+            w = pol[:, 2].mean()
             t = min(1.0, 1.0 - max(0, (w - cam.near)/(cam.far - cam.near)))
-            pygame.draw.polygon(screen, (int(t * t * 255), int(t * t * 255), int(255 / (t * 2))), draw_vertices)
+            r_g = int(t * t * 255)
+            b = min(255, int(255 / (max(0.01, t) * 2)))
+            pygame.draw.polygon(screen, (r_g, r_g, b), pts)
 
     
 
@@ -93,13 +90,13 @@ def main():
         current_cam.addOrientation(dy * sensitivity, dx * sensitivity)
 
         if keys[pygame.K_w]:
-            current_cam.addPosition([1, 0, 0], velocity)
-        if keys[pygame.K_s]:
             current_cam.addPosition([-1, 0, 0], velocity)
+        if keys[pygame.K_s]:
+            current_cam.addPosition([1, 0, 0], velocity)
         if keys[pygame.K_a]:
-            current_cam.addPosition([0, -1, 0], velocity)
-        if keys[pygame.K_d]:
             current_cam.addPosition([0, 1, 0], velocity)
+        if keys[pygame.K_d]:
+            current_cam.addPosition([0, -1, 0], velocity)
 
         
         screen.fill(BG_COLOR)
