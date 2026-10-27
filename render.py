@@ -7,13 +7,14 @@ from gameObj import GameObject
 
 
 def renderObjects(objects, cam, width, height, screen):
+    mvp = cam.getMVP()
     for gObject in objects:
         transformed_coordinates = []
         vertices = gObject.getGlobalVertices()
 
         for vertex in vertices:
             homVertex = np.array([vertex[0], vertex[1], vertex[2], 1.0])
-            newVertex = cam.getMVP() @ homVertex
+            newVertex = mvp @ homVertex
 
             w = newVertex[3]
             if w > 0:
