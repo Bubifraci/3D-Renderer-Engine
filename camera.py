@@ -27,7 +27,8 @@ class Camera:
     def addOrientation(self, dPitch, dYaw):
         if(self.pitch + dPitch < 90 and self.pitch + dPitch > -90):
             self.pitch = self.pitch + dPitch
-        self.yaw = self.yaw + dYaw
+        self.yaw = max(-360, min(360, self.yaw + dYaw))
+        
 
     def addPosition(self, dPos, velocity):
         dPos = np.array(dPos, dtype=float)

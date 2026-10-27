@@ -4,14 +4,41 @@ import numpy as np
 
 from camera import Camera
 from gameObj import GameObject
+from lightsource import LightSource
 
 
-def renderObjects(objects, cam, width, height, screen):
+def renderObjects(objects, cam, width, height, screen, lightsources):
     mvp = cam.getMVP()
     for gObject in objects:
         vertices = gObject.getGlobalVertices()
+        faces = np.array(gObject.faces)
 
         vertexMatrix = np.array(vertices)
+
+        #Calculate brightness
+        triangles_3d = vertexMatrix[faces]
+        v0 = triangles_3d[:, 0, :]
+        v1 = triangles_3d[:, 1, :]
+        v2 = triangles_3d[:, 2, :]
+
+        A = v1 - v0
+        B = v2 - v0
+
+        normals = np.cross(A, B)
+        norm_lengths = np.linalg.norm(normals, axis=1, keepdims=True)
+        norm_lengths[norm_lengths == 0] = 1.0 
+        normals /= norm_lengths
+
+        brightness = np.zeros(len(faces))
+
+        for light in lightsources:
+            dir = np.array(light.position, dtype=float)
+            light_norm = np.linalg.norm(dir)
+            if light_norm > 0:
+                dir /= light_norm
+            brightness += np.maximum(0.2, np.dot(normals, dir))
+            
+
 
         ones = np.ones(len(vertexMatrix))
 
@@ -29,29 +56,37 @@ def renderObjects(objects, cam, width, height, screen):
         renderCoordinates = np.array([x_vals, y_vals, w_vals]).T
 
         # Faces
-        faces = np.array(gObject.faces)
-
         polygons = renderCoordinates[faces]
-
         w_polygons = polygons[:, :, 2]
-
         valid_mask = (w_polygons > 0).all(axis=1)
 
         w_polyongs = polygons[valid_mask]
+        valid_brightness = brightness[valid_mask]
 
-        mean_w = w_polyongs[:, :, 2].mean(axis=1)
+        p0 = w_polyongs[:, 0, :2]
+        p1 = w_polyongs[:, 1, :2]
+        p2 = w_polyongs[:, 2, :2]
+
+        cross_2d = (p1[:, 0] - p0[:, 0]) * (p2[:, 1] - p0[:, 1]) - (p1[:, 1] - p0[:, 1]) * (p2[:, 0] - p0[:, 0])
+
+        front_mask = cross_2d > 0
+
+        front_polygons = w_polyongs[front_mask]
+        front_brightness = valid_brightness[front_mask]
+
+        mean_w = front_polygons[:, :, 2].mean(axis=1)
 
         sort_indices = np.argsort(mean_w)[::-1]
 
-        sorted_triangles = w_polyongs[sort_indices]
+        sorted_triangles = front_polygons[sort_indices]
+        sorted_brightness = front_brightness[sort_indices]
 
-        for pol in sorted_triangles:
+        i = 0
+        for pol, bright in zip(sorted_triangles, sorted_brightness):
             pts = pol[:, :2]
-            w = pol[:, 2].mean()
-            t = min(1.0, 1.0 - max(0, (w - cam.near)/(cam.far - cam.near)))
-            r_g = int(t * t * 255)
-            b = min(255, int(255 / (max(0.01, t) * 2)))
-            pygame.draw.polygon(screen, (r_g, r_g, b), pts)
+            color_val = int(np.clip(255 * bright, 0, 255))
+            pygame.draw.polygon(screen, (color_val, color_val, color_val), pts)
+            i += 1
 
     
 
@@ -77,7 +112,9 @@ def main():
 
     current_cam = Camera(60, SCREEN_WIDTH/SCREEN_HEIGHT, [0, 0, 0], 0.1, 50.0)
 
-    present_objects = [GameObject.importObj("objects/tea.obj", [20, 0, 0])]
+    present_objects = [GameObject.importObj("objects/tea.obj", [20, 0, 0], [0, 90, 0])]
+
+    present_lights = [LightSource(0.9, [0, 15, 10])]
 
     while running:
         for event in pygame.event.get():
@@ -90,18 +127,18 @@ def main():
         current_cam.addOrientation(dy * sensitivity, dx * sensitivity)
 
         if keys[pygame.K_w]:
-            current_cam.addPosition([-1, 0, 0], velocity)
-        if keys[pygame.K_s]:
             current_cam.addPosition([1, 0, 0], velocity)
+        if keys[pygame.K_s]:
+            current_cam.addPosition([-1, 0, 0], velocity)
         if keys[pygame.K_a]:
-            current_cam.addPosition([0, 1, 0], velocity)
-        if keys[pygame.K_d]:
             current_cam.addPosition([0, -1, 0], velocity)
+        if keys[pygame.K_d]:
+            current_cam.addPosition([0, 1, 0], velocity)
 
         
         screen.fill(BG_COLOR)
 
-        renderObjects(present_objects, current_cam, SCREEN_WIDTH, SCREEN_HEIGHT, screen)
+        renderObjects(present_objects, current_cam, SCREEN_WIDTH, SCREEN_HEIGHT, screen, present_lights)
 
         pygame.display.flip() 
 

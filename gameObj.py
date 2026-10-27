@@ -3,13 +3,14 @@ import numpy as np
 
 class GameObject:
 
-    def __init__(self, vertices, faces, startPosition):
+    def __init__(self, vertices, faces, startPosition, startRotation):
         self.vertices = np.array(vertices)
         self.faces = np.array(faces)
-        self.startPosition = np.array(startPosition)
+        self.position = np.array(startPosition)
+        self.rotation = np.array(startRotation)
 
     @staticmethod
-    def importObj(filename, startPosition):
+    def importObj(filename, startPosition, startRotation):
         vertices = []
         faces = []
 
@@ -37,10 +38,20 @@ class GameObject:
                         face_indices.append(idx)
                     faces.append(face_indices)
 
-        return GameObject(vertices, faces, startPosition)
+        return GameObject(vertices, faces, startPosition, startRotation)
 
     def getGlobalVertices(self):
-        transformed_vertices = []
-        for vertex in self.vertices:
-            transformed_vertices.append(np.add(vertex, self.startPosition))
-        return transformed_vertices
+            rad = np.deg2rad(self.rotation)
+            rotMatrix = GameObject.getRotationMatrix(rad[0], rad[1], rad[2])
+            return (self.vertices @ rotMatrix.T) + self.position
+
+    @staticmethod
+    def getRotationMatrix(r, p, y):
+        alpha = y
+        beta = p
+        gamma = r
+        return np.array([
+            [np.cos(alpha) * np.cos(beta), np.cos(alpha) * np.sin(beta) * np.sin(gamma) - np.sin(alpha) * np.cos(gamma), np.cos(alpha) * np.sin(beta) * np.cos(gamma) + np.sin(alpha) * np.sin(gamma)],
+            [np.sin(alpha) * np.cos(beta), np.sin(alpha) * np.sin(beta) * np.sin(gamma) + np.cos(alpha) * np.cos(gamma), np.sin(alpha) * np.sin(beta) * np.cos(gamma) - np.cos(alpha) * np.sin(gamma)],
+            [-np.sin(beta), np.cos(beta) * np.sin(gamma), np.cos(beta) * np.cos(gamma)]
+        ])
