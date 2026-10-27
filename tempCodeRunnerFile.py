@@ -15,7 +15,7 @@ def renderObjects(objects, cam, width, height, screen, lightsources):
 
         vertexMatrix = np.array(vertices)
 
-        #Calculate brightnes
+        #Calculate brightness
         triangles_3d = vertexMatrix[faces]
         v0 = triangles_3d[:, 0, :]
         v1 = triangles_3d[:, 1, :]
@@ -112,7 +112,7 @@ def main():
 
     current_cam = Camera(60, SCREEN_WIDTH/SCREEN_HEIGHT, [0, 0, 0], 0.1, 50.0)
 
-    present_objects = [GameObject.importObj("objects/tea.obj", [20, 0, 0])]
+    present_objects = [GameObject.importObj("objects/tea.obj", [20, 0, 0], [0, 90, 0])]
 
     present_lights = [LightSource(0.9, [0, 15, 10])]
 

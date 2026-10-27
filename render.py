@@ -44,34 +44,31 @@ def renderObjects(objects, cam, width, height, screen, lightsources):
 
         vertexMatrix = np.column_stack((vertexMatrix, ones)).T
 
-        transformedMatrix = mvp @ vertexMatrix
+        transformedMatrix = (mvp @ vertexMatrix).T
+        clip_polygons = transformedMatrix[faces]
 
-        w_vals = transformedMatrix[3]
+        w_clip = clip_polygons[:, :, 3]
+        valid_mask = (w_clip > cam.near).all(axis=1)
 
-        transformedMatrix /= w_vals
-
-        x_vals = width * (transformedMatrix[0] + 1) / 2.0
-        y_vals = height * (1 - transformedMatrix[1]) / 2.0
-
-        renderCoordinates = np.array([x_vals, y_vals, w_vals]).T
-
-        # Faces
-        polygons = renderCoordinates[faces]
-        w_polygons = polygons[:, :, 2]
-        valid_mask = (w_polygons > 0).all(axis=1)
-
-        w_polyongs = polygons[valid_mask]
+        valid_clip_polygons = clip_polygons[valid_mask]
         valid_brightness = brightness[valid_mask]
 
-        p0 = w_polyongs[:, 0, :2]
-        p1 = w_polyongs[:, 1, :2]
-        p2 = w_polyongs[:, 2, :2]
+        w_valid = valid_clip_polygons[:, :, 3]
+        x_vals = width * (valid_clip_polygons[:, :, 0] / w_valid + 1) / 2.0
+        y_vals = height * (1 - valid_clip_polygons[:, :, 1] / w_valid) / 2.0
+
+        renderCoordinates = np.stack([x_vals, y_vals, w_valid], axis=2)
+
+        # Faces
+        p0 = renderCoordinates[:, 0, :2]
+        p1 = renderCoordinates[:, 1, :2]
+        p2 = renderCoordinates[:, 2, :2]
 
         cross_2d = (p1[:, 0] - p0[:, 0]) * (p2[:, 1] - p0[:, 1]) - (p1[:, 1] - p0[:, 1]) * (p2[:, 0] - p0[:, 0])
 
         front_mask = cross_2d > 0
 
-        front_polygons = w_polyongs[front_mask]
+        front_polygons = renderCoordinates[front_mask]
         front_brightness = valid_brightness[front_mask]
 
         mean_w = front_polygons[:, :, 2].mean(axis=1)
@@ -93,8 +90,8 @@ def renderObjects(objects, cam, width, height, screen, lightsources):
 def main():
     pygame.init()
 
-    SCREEN_WIDTH = 800
-    SCREEN_HEIGHT = 600
+    SCREEN_WIDTH = 1280
+    SCREEN_HEIGHT = 920
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     pygame.display.set_caption("3D Renderer")
     pygame.mouse.set_visible(False)
@@ -112,7 +109,10 @@ def main():
 
     current_cam = Camera(60, SCREEN_WIDTH/SCREEN_HEIGHT, [0, 0, 0], 0.1, 50.0)
 
-    present_objects = [GameObject.importObj("objects/tea.obj", [20, 0, 0], [0, 90, 0])]
+    present_objects = [
+        GameObject.importObj("objects/tea.obj", [20, 0, 0], [270, 0, 0]), 
+        #GameObject.importObj("objects/model.obj", [10, 20, 0], [270, 0, 0])
+        ]
 
     present_lights = [LightSource(0.9, [0, 15, 10])]
 

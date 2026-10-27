@@ -8,7 +8,7 @@ class Camera:
         self.near = near
         self.far = far
 
-        self.pitch = 45
+        self.pitch = 0
         self.yaw = 0
         self.globalUp = np.array([0, 0, 1])
 
@@ -27,7 +27,11 @@ class Camera:
     def addOrientation(self, dPitch, dYaw):
         if(self.pitch + dPitch < 90 and self.pitch + dPitch > -90):
             self.pitch = self.pitch + dPitch
-        self.yaw = max(-360, min(360, self.yaw + dYaw))
+        while((self.yaw + dYaw) >= 360.0):
+            dYaw -= 360
+        while((self.yaw + dYaw) <= -360.0):
+            dYaw += 360
+        self.yaw = self.yaw + dYaw
         
 
     def addPosition(self, dPos, velocity):
@@ -36,15 +40,18 @@ class Camera:
         if norm > 0:
             dPos = (dPos / norm) * velocity
 
-            f = self.getOrientation() / np.linalg.norm(self.getOrientation())
+            f = self.getOrientation()
 
             f = np.array([f[0], f[1], 0.0])
+
+            f /= np.linalg.norm(f)
 
             gO = self.globalUp / np.linalg.norm(self.globalUp)
             
             r = np.cross(gO, f)
-        
-            r /= np.linalg.norm(r)
+
+            if(np.linalg.norm(r) > 0):
+                r /= np.linalg.norm(r)
         
             u = np.cross(r, f)
         
