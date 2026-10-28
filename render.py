@@ -66,7 +66,7 @@ def renderObjects(objects, cam, width, height, screen, lightsources):
 
         cross_2d = (p1[:, 0] - p0[:, 0]) * (p2[:, 1] - p0[:, 1]) - (p1[:, 1] - p0[:, 1]) * (p2[:, 0] - p0[:, 0])
 
-        front_mask = cross_2d > 0
+        front_mask = cross_2d < 0
 
         front_polygons = renderCoordinates[front_mask]
         front_brightness = valid_brightness[front_mask]
@@ -110,7 +110,8 @@ def main():
     current_cam = Camera(60, SCREEN_WIDTH/SCREEN_HEIGHT, [0, 0, 0], 0.1, 50.0)
 
     present_objects = [
-        GameObject.importObj("objects/tea.obj", [20, 0, 0], [270, 0, 0], [1.0, 1.0, 1.0]), 
+        #GameObject.importObj("objects/tea.obj", [20, 0, 0], [270, 0, 0], [1.0, 1.0, 1.0]), 
+        GameObject.importObj("objects/cube.obj", [10, 20, 0], [270, 0, 0], [10.0, 10.0, 10.0])
         #GameObject.importObj("objects/model.obj", [10, 20, 0], [270, 0, 0], [0.01, 0.01, 0.01])
         ]
 
