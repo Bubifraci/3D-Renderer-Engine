@@ -110,8 +110,8 @@ def main():
     current_cam = Camera(60, SCREEN_WIDTH/SCREEN_HEIGHT, [0, 0, 0], 0.1, 50.0)
 
     present_objects = [
-        GameObject.importObj("objects/tea.obj", [20, 0, 0], [270, 0, 0]), 
-        #GameObject.importObj("objects/model.obj", [10, 20, 0], [270, 0, 0])
+        GameObject.importObj("objects/tea.obj", [20, 0, 0], [270, 0, 0], [1.0, 1.0, 1.0]), 
+        #GameObject.importObj("objects/model.obj", [10, 20, 0], [270, 0, 0], [0.01, 0.01, 0.01])
         ]
 
     present_lights = [LightSource(0.9, [0, 15, 10])]
