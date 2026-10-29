@@ -13,7 +13,7 @@ def renderObjects(objects, cam, width, height, screen, lightsources):
     mvp = cam.getMVP()
     for gObject in objects:
         vertices = gObject.getGlobalVertices()
-        faces = np.array(gObject.faces)
+        faces = gObject.faces
 
         vertexMatrix = np.array(vertices)
 
@@ -88,12 +88,10 @@ def renderObjects(objects, cam, width, height, screen, lightsources):
     sorted_triangles = all_triangles[sort_indices]
     sorted_brightness = all_brightness[sort_indices]
 
-    i = 0
     for pol, bright in zip(sorted_triangles, sorted_brightness):
         pts = pol[:, :2]
         color_val = int(np.clip(255 * bright, 0, 255))
         pygame.draw.polygon(screen, (color_val, color_val, color_val), pts)
-        i += 1
 
     
 
@@ -156,6 +154,9 @@ def main():
 
 
 def generateRandomObjects(amount, scale=1.0, max_dist=100.0, filename="cube"):
+    baseObject = GameObject.importObj(
+                            "objects/"+filename+".obj", [0, 0, 0], [0, 0, 0], [scale, scale, scale]
+                        )
     objects = []
     positions = []
     
@@ -169,9 +170,7 @@ def generateRandomObjects(amount, scale=1.0, max_dist=100.0, filename="cube"):
             if all(np.linalg.norm(coordinate - oldCoord) > scale * 2 for oldCoord in positions):
                 positions.append(coordinate)
                 objects.append(
-                    GameObject.importObj(
-                        "objects/"+filename+".obj", [x, y, z], [0, 0, 0], [scale, scale, scale]
-                    )
+                    GameObject(baseObject.vertices, baseObject.faces, [x, y, z], [0, 0, 0], [scale, scale, scale])
                 )
                 break
 
