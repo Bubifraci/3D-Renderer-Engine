@@ -1,17 +1,21 @@
 import numpy as np
-
+from rigidBody import RigidBody
 
 class GameObject:
 
-    def __init__(self, vertices, faces, startPosition, startRotation, startScale):
+    def __init__(self, vertices, faces, startPosition, startRotation, startScale, mass=0.0):
         self.vertices = np.array(vertices)
         self.faces = np.array(faces)
         self.position = np.array(startPosition)
         self.rotation = np.array(startRotation)
         self.scale = np.array(startScale)
+        if(mass > 0.0):
+            self.rigidBody = RigidBody(mass, self.position)
+
+        
 
     @staticmethod
-    def importObj(filename, startPosition, startRotation, startScale):
+    def importObj(filename, startPosition, startRotation, startScale, mass=0.0):
         vertices = []
         faces = []
 
@@ -39,12 +43,16 @@ class GameObject:
                         face_indices.append(idx)
                     faces.append(face_indices)
 
-        return GameObject(vertices, faces, startPosition, startRotation, startScale)
+        return GameObject(vertices, faces, startPosition, startRotation, startScale, mass=mass)
 
     def getGlobalVertices(self):
             rad = np.deg2rad(self.rotation)
             rotMatrix = GameObject.getRotationMatrix(rad[0], rad[1], rad[2], scale=self.scale)
             return (self.vertices @ rotMatrix.T) + self.position
+
+    def computePhysics(self, dt):
+        if hasattr(self, 'rigidBody'):
+            self.position = self.rigidBody.computeNewPosition(dt)
 
     @staticmethod
     def getRotationMatrix(r, p, y, scale=[1.0, 1.0, 1.0]):

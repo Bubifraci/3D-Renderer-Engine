@@ -115,9 +115,9 @@ def main():
 
     running = True
 
-    current_cam = Camera(60, SCREEN_WIDTH/SCREEN_HEIGHT, [0, 0, 0], 0.1, 50.0)
+    current_cam = Camera(60, SCREEN_WIDTH/SCREEN_HEIGHT, [0, 0, 100], 0.1, 50.0)
 
-    present_objects = generateRandomObjects(200, 1.0, 100, filename="cube")
+    present_objects = generateRandomObjects(20, 1.0, 100, filename="cube", mass=100.0)
 
     present_lights = [LightSource(0.9, [0, 15, 10]), LightSource(0.9, [0, -15, -10]), LightSource(0.9, [23, -14, -30])]
 
@@ -147,15 +147,18 @@ def main():
 
         pygame.display.flip() 
 
-        clock.tick(FPS)
+        dt = clock.tick(FPS) / 1000.0
+
+        for gObject in present_objects:
+            gObject.computePhysics(dt)
 
     pygame.quit()
     sys.exit()
 
 
-def generateRandomObjects(amount, scale=1.0, max_dist=100.0, filename="cube"):
+def generateRandomObjects(amount, scale=1.0, max_dist=100.0, filename="cube", mass=1.0):
     baseObject = GameObject.importObj(
-                            "objects/"+filename+".obj", [0, 0, 0], [0, 0, 0], [scale, scale, scale]
+                            "objects/"+filename+".obj", [0, 0, 0], [0, 0, 0], [scale, scale, scale], mass=mass
                         )
     objects = []
     positions = []
@@ -170,7 +173,7 @@ def generateRandomObjects(amount, scale=1.0, max_dist=100.0, filename="cube"):
             if all(np.linalg.norm(coordinate - oldCoord) > scale * 2 for oldCoord in positions):
                 positions.append(coordinate)
                 objects.append(
-                    GameObject(baseObject.vertices, baseObject.faces, [x, y, z], [0, 0, 0], [scale, scale, scale])
+                    GameObject(baseObject.vertices, baseObject.faces, [x, y, z], [0, 0, 0], [scale, scale, scale], mass=mass)
                 )
                 break
 
