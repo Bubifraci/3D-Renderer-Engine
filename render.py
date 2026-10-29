@@ -8,6 +8,8 @@ from lightsource import LightSource
 
 
 def renderObjects(objects, cam, width, height, screen, lightsources):
+    globalBrightness = []
+    globalTriangles = []
     mvp = cam.getMVP()
     for gObject in objects:
         vertices = gObject.getGlobalVertices()
@@ -71,19 +73,27 @@ def renderObjects(objects, cam, width, height, screen, lightsources):
         front_polygons = renderCoordinates[front_mask]
         front_brightness = valid_brightness[front_mask]
 
-        mean_w = front_polygons[:, :, 2].mean(axis=1)
+        if len(front_polygons) > 0:
+            globalTriangles.append(front_polygons)
+            globalBrightness.append(front_brightness)
 
-        sort_indices = np.argsort(mean_w)[::-1]
+    if not globalTriangles:
+            return
+    all_triangles = np.concatenate(globalTriangles, axis=0)
+    all_brightness = np.concatenate(globalBrightness, axis=0)
 
-        sorted_triangles = front_polygons[sort_indices]
-        sorted_brightness = front_brightness[sort_indices]
+    mean_w = all_triangles[:, :, 2].mean(axis=1)
+    sort_indices = np.argsort(mean_w)[::-1]
 
-        i = 0
-        for pol, bright in zip(sorted_triangles, sorted_brightness):
-            pts = pol[:, :2]
-            color_val = int(np.clip(255 * bright, 0, 255))
-            pygame.draw.polygon(screen, (color_val, color_val, color_val), pts)
-            i += 1
+    sorted_triangles = all_triangles[sort_indices]
+    sorted_brightness = all_brightness[sort_indices]
+
+    i = 0
+    for pol, bright in zip(sorted_triangles, sorted_brightness):
+        pts = pol[:, :2]
+        color_val = int(np.clip(255 * bright, 0, 255))
+        pygame.draw.polygon(screen, (color_val, color_val, color_val), pts)
+        i += 1
 
     
 
