@@ -8,7 +8,6 @@ A CPU-based 3D software renderer and basic rigid-body physics engine written in 
 - **Backface Culling & Depth Sorting:** 2D cross-product backface culling and painter's algorithm depth sorting for polygon occlusion.
 - **Flat Shading:** Per-face surface normal calculation and diffuse lighting from multiple light sources.
 - **`.obj` Mesh Loader:** Basic Wavefront `.obj` parser supporting custom scaling, Euler rotations, and world positioning.
-- **Rigid-Body Physics:** Simple Newtonian physics integration supporting gravity, forces, and impulses (`rigidBody.py`).
 - **First-Person Camera:** Free-look camera with mouse yaw/pitch rotation and `WASD` movement.
 
 ## Project Structure
@@ -16,7 +15,6 @@ A CPU-based 3D software renderer and basic rigid-body physics engine written in 
 - `render.py` – Main loop, scene initialization, and rendering pipeline
 - `camera.py` – View/projection matrices and camera movement
 - `gameObj.py` – Mesh representation, rotation matrices, and `.obj` file loader
-- `rigidBody.py` – Velocity and position integration for rigid bodies
 - `lightsource.py` – Light source data structure
 - `objects/` – `.obj` mesh files (e.g., `cube.obj`)
 
