@@ -31,7 +31,7 @@ A CPU-based 3D software renderer and basic rigid-body physics engine written in 
 Requires Python 3.8+, `numpy`, and `pygame`.
 
 ```bash
-git clone [https://github.com/Bubifraci/3D-Renderer-Engine.git](https://github.com/Bubifraci/3D-Renderer-Engine.git)
+git clone https://github.com/Bubifraci/3D-Renderer-Engine.git
 cd 3D-Renderer-Engine
 pip install numpy pygame
 python render.py
